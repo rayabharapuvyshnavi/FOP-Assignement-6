@@ -1,5 +1,6 @@
 struct count_result {
     int count;
+    int instance_count;
     char** instances;
 };
 

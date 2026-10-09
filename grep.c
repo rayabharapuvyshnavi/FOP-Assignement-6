@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         
         printf("Found: %d of %s in %s", result.count, target_word, filepath);
 
-        for(int i = 0 ; i < result.count ; i++){
+        for(int i = 0 ; i < result.instance_count ; i++){
             printf("res.instances[%d]: %s", i, result.instances[i]);
         }
         

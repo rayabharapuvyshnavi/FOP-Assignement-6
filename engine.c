@@ -59,7 +59,7 @@ static char *trim_line(char *line) {
 
 static bool append_instance(struct count_result *result, size_t *capacity,
 							const char *line) {
-	if ((size_t)result->count == *capacity) {
+	if ((size_t)result->instance_count == *capacity) {
 		size_t new_capacity = *capacity == 0 ? 16 : *capacity * 2;
 		char **instances = realloc(result->instances,
 				new_capacity * sizeof(*result->instances));
@@ -70,26 +70,27 @@ static bool append_instance(struct count_result *result, size_t *capacity,
 		*capacity = new_capacity;
 	}
 
-	result->instances[result->count] = malloc(strlen(line) + 1);
-	if (result->instances[result->count] == NULL) {
+	result->instances[result->instance_count] = malloc(strlen(line) + 1);
+	if (result->instances[result->instance_count] == NULL) {
 		return false;
 	}
-	strcpy(result->instances[result->count], line);
-	result->count++;
+	strcpy(result->instances[result->instance_count], line);
+	result->instance_count++;
 	return true;
 }
 
 static void free_result(struct count_result *result) {
-	for (int i = 0; i < result->count; i++) {
+	for (int i = 0; i < result->instance_count; i++) {
 		free(result->instances[i]);
 	}
 	free(result->instances);
 	result->count = 0;
+	result->instance_count = 0;
 	result->instances = NULL;
 }
 
 struct count_result search_instance(char *filename, char *target) {
-	struct count_result result = {0, NULL};
+	struct count_result result = {0, 0, NULL};
 	if (filename == NULL || target == NULL || target[0] == '\0') {
 		return result;
 	}
@@ -99,24 +100,21 @@ struct count_result search_instance(char *filename, char *target) {
 		return result;
 	}
 
-	size_t target_length = strlen(target);
 	size_t instance_capacity = 0;
+	size_t target_length = strlen(target);
 	char *line = NULL;
 	size_t line_capacity = 0;
 	bool allocation_failed = false;
 
 	while (filereader(file, &line, &line_capacity) != -1) {
 		char *trimmed = trim_line(line);
-		char *position = trimmed;
-		while ((position = strstr(position, target)) != NULL) {
+		int matches = count_matches(trimmed, target, target_length);
+		if (matches > 0) {
+			result.count += matches;
 			if (!append_instance(&result, &instance_capacity, trimmed)) {
 				allocation_failed = true;
 				break;
 			}
-			position += target_length;
-		}
-		if (allocation_failed) {
-			break;
 		}
 	}
 
